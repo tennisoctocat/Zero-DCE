@@ -21,17 +21,24 @@ def lowlight(image_path):
 	os.environ['CUDA_VISIBLE_DEVICES']='0'
 	data_lowlight = Image.open(image_path)
 
- 
+ 	
+ 	# if len(np.array(data_lowlight).shape) > 3:
+ 	# 	data_lowlight = 
+ 	# Added last part to take out the alpha channel of the image. 
+	data_lowlight = (np.asarray(data_lowlight)/255.0)#[:, :, :3]
+	if len(data_lowlight.shape) < 3:
+		return
 
-	data_lowlight = (np.asarray(data_lowlight)/255.0)
-
+	if data_lowlight.shape[2] > 3:
+		data_lowlight = data_lowlight[:, :, :3]
+	#print(data_lowlight.shape)
 
 	data_lowlight = torch.from_numpy(data_lowlight).float()
 	data_lowlight = data_lowlight.permute(2,0,1)
-	data_lowlight = data_lowlight.cuda().unsqueeze(0)
+	data_lowlight = data_lowlight.unsqueeze(0)#cuda().unsqueeze(0)
 
-	DCE_net = model.enhance_net_nopool().cuda()
-	DCE_net.load_state_dict(torch.load('snapshots/Epoch99.pth'))
+	DCE_net = model.enhance_net_nopool()#.cuda()
+	DCE_net.load_state_dict(torch.load('snapshots/Epoch99.pth', map_location=torch.device('cpu')))
 	start = time.time()
 	_,enhanced_image,_ = DCE_net(data_lowlight)
 
@@ -47,16 +54,16 @@ def lowlight(image_path):
 if __name__ == '__main__':
 # test_images
 	with torch.no_grad():
-		filePath = 'data/test_data/'
+		filePath = 'data/test_data/my_imgs'
 	
-		file_list = os.listdir(filePath)
+		#file_list = os.listdir(filePath)
 
-		for file_name in file_list:
-			test_list = glob.glob(filePath+file_name+"/*") 
-			for image in test_list:
-				# image = image
-				print(image)
-				lowlight(image)
+		#for file_name in file_list:
+		test_list = glob.glob(filePath+"/*") #+file_name+"/*") 
+		for image in test_list:
+			# image = image
+			print(image)
+			lowlight(image)
 
 		
 
